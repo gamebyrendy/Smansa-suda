@@ -1,2 +1,265 @@
 # Smansa-suda
 MARII BELAJAR MATEMATIKA BERSAMA SMA N 1 SULTAN DAULAT BELAJAR PERKALIAN ITU SERU DAN MUDAH LOH
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Kuis Ceria Anak Pintar!</title>
+<style>
+  :root{
+    --bg1:#fde2ff; --bg2:#e0f7ff; --bg3:#fff7d6;
+    --card:#ffffff; --text:#1b4332; --muted:#6c757d;
+    --shadow:0 20px 50px rgba(0,0,0,.12);
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family: "Poppins", system-ui, -apple-system, Arial, sans-serif;
+    color:var(--text);
+    background: radial-gradient(1200px 600px at 20% 10%, var(--bg1), transparent),
+                radial-gradient(1000px 600px at 80% 20%, var(--bg2), transparent),
+                radial-gradient(900px 600px at 50% 90%, var(--bg3), #f6f7fb);
+    min-height:100svh;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:28px 18px 40px}
+  header{
+    display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;
+  }
+  h1{
+    margin:0; font-size:clamp(22px, 2.4vw, 30px); color:#1f6feb; font-weight:700;
+  }
+  .chips{display:flex; gap:14px; flex-wrap:wrap}
+  .chip{
+    background:var(--card); box-shadow:var(--shadow); border-radius:16px; padding:12px 16px;
+    display:flex; align-items:center; gap:10px; min-width:130px; justify-content:center;
+  }
+  .chip b{font-size:18px}
+  .title{
+    text-align:center; margin:22px 0 16px; font-size:clamp(28px, 5vw, 40px);
+    color:#ef5da8; text-shadow:0 6px 20px rgba(239,93,168,.25); font-weight:800;
+  }
+  .board{
+    background:var(--card); border-radius:28px; box-shadow:var(--shadow);
+    padding:26px; margin-top:14px; position:relative; overflow:hidden;
+  }
+  .progress{
+    display:inline-block; background:#f0e8ff; color:#6f42c1; font-weight:600;
+    padding:8px 14px; border-radius:14px; margin:0 auto 18px; font-size:14px;
+  }
+  .question{
+    text-align:center; font-size:clamp(28px, 6vw, 42px); font-weight:800; color:#1b4332;
+    margin:8px 0 14px;
+  }
+  .answers{display:grid; gap:14px; margin-top:18px}
+  .btn{
+    border:0; border-radius:24px; padding:18px 18px; font-size:22px; font-weight:700; color:#fff;
+    cursor:pointer; transition:.2s transform, .2s box-shadow, .2s filter;
+    box-shadow:0 10px 26px rgba(0,0,0,.12);
+  }
+  .btn:hover{transform:translateY(-2px)}
+  .btn:disabled{opacity:.7; filter:saturate(.6); cursor:not-allowed}
+  /* empat warna opsi */
+  .btn.c1{background:linear-gradient(135deg,#ff7aa2,#ff5d7a)}
+  .btn.c2{background:linear-gradient(135deg,#58e1d6,#31b6a8)}
+  .btn.c3{background:linear-gradient(135deg,#ffd55e,#f6b042)}
+  .btn.c4{background:linear-gradient(135deg,#a58bff,#7c63ff)}
+  .result{
+    text-align:center; font-size:22px; margin-top:18px; color:var(--muted);
+  }
+  .actions{display:flex; justify-content:center; gap:12px; margin-top:18px}
+  .ghost{
+    background:#1f6feb; color:#fff; border:0; border-radius:14px; padding:12px 16px;
+    font-weight:700; box-shadow:0 10px 24px rgba(31,111,235,.25); cursor:pointer;
+  }
+  /* hiasan emoji */
+  .decors{
+    pointer-events:none; position:fixed; inset:0; overflow:hidden; z-index:-1;
+  }
+  .decors span{
+    position:absolute; font-size:clamp(20px, 5vw, 40px); opacity:.85; filter:drop-shadow(0 6px 12px rgba(0,0,0,.15));
+    animation:float 12s ease-in-out infinite;
+  }
+  @keyframes float{
+    0%,100%{transform:translateY(0)}
+    50%{transform:translateY(-12px)}
+  }
+  /* kecilin padding di layar sempit */
+  @media (max-width:520px){ .board{padding:18px} }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Kuis Ceria Anak Pintar!</h1>
+      <div class="chips">
+        <div class="chip">🏆 Skor: <b id="score">0</b></div>
+        <div class="chip">✅ Benar: <b id="correct">0</b></div>
+      </div>
+    </header>
+
+    <main class="board">
+      <div class="progress" id="progress">Pertanyaan 1 dari 10</div>
+      <div class="question" id="question">3 × 4 = ?</div>
+      <div class="answers" id="answers">
+        <!-- tombol opsi diisi lewat JS -->
+      </div>
+      <div class="result" id="result"></div>
+      <div class="actions">
+        <button class="ghost" id="nextBtn" style="display:none">Pertanyaan Berikutnya ➜</button>
+        <button class="ghost" id="restartBtn" style="display:none">Ulangi Game ↺</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- Hiasan emoji lucu -->
+  <div class="decors" aria-hidden="true" id="decors"></div>
+
+<script>
+(() => {
+  // ====== Utilitas ======
+  const shuffle = arr => [...arr].sort(() => Math.random() - .5);
+  const randInt = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+
+  // ====== Bangun 10 soal perkalian dari 1..10 ======
+  function buildQuestions(total=10){
+    const qs = [];
+    for(let i=0;i<total;i++){
+      const a = randInt(1,10);
+      const b = randInt(1,10);
+      const correct = a*b;
+      // buat 3 jawaban salah yang unik & masih masuk akal
+      const wrong = new Set();
+      while(wrong.size<3){
+        // variasi: +/- kecil atau acak sekitar hasil
+        let v = correct + [ -10,-5,-3,3,5,7,9,11 ][randInt(0,7)];
+        if(v<=0) v = correct + randInt(1,12);
+        if(v!==correct) wrong.add(v);
+      }
+      const choices = shuffle([correct, ...wrong]);
+      qs.push({text:`${a} × ${b} = ?`, correct, choices});
+    }
+    return qs;
+  }
+
+  // ====== Elemen ======
+  const elQ   = document.getElementById('question');
+  const elA   = document.getElementById('answers');
+  const elP   = document.getElementById('progress');
+  const elR   = document.getElementById('result');
+  const elS   = document.getElementById('score');
+  const elC   = document.getElementById('correct');
+  const next  = document.getElementById('nextBtn');
+  const again = document.getElementById('restartBtn');
+
+  // ====== State ======
+  let questions = [];
+  let idx = 0, score = 0, correct = 0;
+
+  function start(){
+    questions = buildQuestions(10);
+    idx = 0; score = 0; correct = 0;
+    elS.textContent = score; elC.textContent = correct;
+    elR.textContent = ''; next.style.display='none'; again.style.display='none';
+    render();
+  }
+
+  function render(){
+    const q = questions[idx];
+    elQ.textContent = q.text;
+    elP.textContent = `Pertanyaan ${idx+1} dari ${questions.length}`;
+    elA.innerHTML = '';
+    const colors = ['c1','c2','c3','c4'];
+    q.choices.forEach((choice, i) => {
+      const btn = document.createElement('button');
+      btn.className = `btn ${colors[i%4]}`;
+      btn.textContent = choice;
+      btn.onclick = () => choose(choice, btn);
+      elA.appendChild(btn);
+    });
+  }
+
+  function choose(value, btn){
+    // disable semua tombol
+    [...elA.children].forEach(b => b.disabled = true);
+    const q = questions[idx];
+    const isRight = value === q.correct;
+    if(isRight){
+      score += 10; correct += 1;
+      elR.textContent = 'Keren! Jawabanmu benar 🎉';
+      elS.textContent = score; elC.textContent = correct;
+      pulse(btn);
+    }else{
+      elR.textContent = `Yah, kurang tepat. Jawaban: ${q.correct}`;
+      shake(btn);
+    }
+    if(idx < questions.length-1){
+      next.style.display='inline-block';
+    }else{
+      again.style.display='inline-block';
+      next.style.display='none';
+      elP.textContent = `Selesai! Skor akhir ${score} – Benar ${correct}/${questions.length}`;
+    }
+  }
+
+  function pulse(node){
+    node.animate([
+      {transform:'scale(1)'},
+      {transform:'scale(1.06)'},
+      {transform:'scale(1)'}
+    ], {duration:400, easing:'ease-out'});
+    confettiBurst();
+  }
+  function shake(node){
+    node.animate([
+      {transform:'translateX(0)'},
+      {transform:'translateX(-6px)'},
+      {transform:'translateX(6px)'},
+      {transform:'translateX(0)'}
+    ], {duration:280, easing:'ease-in-out'});
+  }
+
+  next.onclick = () => { idx++; elR.textContent=''; next.style.display='none'; render(); };
+  again.onclick = start;
+
+  // ====== Emoji confetti sederhana ======
+  function confettiBurst(){
+    const emojis = ['🎉','✨','💫','🌟','🎈','💖'];
+    for(let i=0;i<12;i++){
+      const span = document.createElement('span');
+      span.textContent = emojis[randInt(0,emojis.length-1)];
+      Object.assign(span.style, {
+        position:'fixed', left: (Math.random()*80+10)+'%',
+        top: '45%', fontSize:(Math.random()*16+18)+'px',
+        pointerEvents:'none', zIndex:9999
+      });
+      document.body.appendChild(span);
+      const dx = (Math.random()*2-1)*80;
+      const dy = 140 + Math.random()*100;
+      span.animate([
+        {transform:'translate(0,0)', opacity:1},
+        {transform:`translate(${dx}px, ${dy}px) rotate(${Math.random()*360}deg)`, opacity:0}
+      ], {duration:1200+Math.random()*600, easing:'cubic-bezier(.25,.8,.25,1)'})
+      .onfinish = () => span.remove();
+    }
+  }
+
+  // ====== Hiasan mengambang di background ======
+  (function buildDecors(){
+    const icons = ['🦄','🦋','🌈','🎈','☁️','⭐','🍭'];
+    const box = document.getElementById('decors');
+    for(let i=0;i<14;i++){
+      const s = document.createElement('span');
+      s.textContent = icons[randInt(0,icons.length-1)];
+      s.style.left = Math.random()*95+'%';
+      s.style.top  = Math.random()*85+'%';
+      s.style.animationDelay = (Math.random()*8)+'s';
+      box.appendChild(s);
+    }
+  })();
+
+  // mulai!
+  start();
+})();
+</script>
+</body>
+</html>
